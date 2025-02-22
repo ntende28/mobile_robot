@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <link name="base_link" />
+
+    <!-- body attributes -->
+    <xacro:property name="body_mass" value="2.0"/>
+
+    <!-- creating a resuable macro for the box inertial -->
+    <xacro:macro name="inertial_box" params="mass x y z">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="${mass}" />
+            <inertia ixx="${(1/12) * mass * (y*y+z*z)}" ixy="0.0" ixz="0.0"
+                    iyy="${(1/12) * mass * (x*x+z*z)}" iyz="0.0"
+                    izz="${(1/12) * mass * (x*x+y*y)}" />
+        </inertial>
+    </xacro:macro>
+    
+    <link name="chassis">
+
+        <xacro:inertial_box mass="${body_mass}" x="0.5" y="0.3" z="0.1" />
+        
+        <visual>
+            <origin xyz="0.0 0.0 0.075" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.5 0.3 0.10"/>
+            </geometry>
+            <material name="">
+                <color rgba="1.0 0.0 0.0 1.0"/>
+                <texture filename=""/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 0.075" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.5 0.3 0.10"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="base_joint" type="fixed">
+        <origin xyz="0.25 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="base_link"/>
+        <child link="chassis"/>
+        <axis xyz="0.0 0.0 0.0"/>
+    </joint>
+    
+    <gazebo reference="chassis">
+        <mu1>0.002</mu1>
+        <mu2>0.002</mu2>
+        <material>Gazebo/Red</material>
+    </gazebo>
+
+    <link name="imu_link" />
+
+    <joint name="imu_joint" type="fixed">
+        <origin xyz="0.25 0.0 0.03" rpy="0.0 0.0 0.0"/>
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <axis xyz="0.0 0.0 0.0"/>
+    </joint>
+
+    <gazebo>
+        <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+          <alwaysOn>true</alwaysOn>
+          <bodyName>chassis</bodyName>
+          <topicName>imu</topicName>
+          <frameName>imu_link</frameName>
+          <serviceName>imu_service</serviceName>
+          <gaussianNoise>0.0</gaussianNoise>
+          <updateRate>20.0</updateRate>
+        </plugin>
+    </gazebo>
+    
+    <gazebo reference="imu_link">
+        <gravity>true</gravity>
+        <sensor name="imu_sensor" type="imu">
+          <always_on>true</always_on>
+          <update_rate>100</update_rate>
+          <visualize>true</visualize>
+          <topic>__default_topic__</topic>
+          <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+            <topicName>imu</topicName>
+            <bodyName>imu_link</bodyName>
+            <updateRateHZ>10.0</updateRateHZ>
+            <gaussianNoise>0.0</gaussianNoise>
+            <xyzOffset>0 0 0</xyzOffset>
+            <rpyOffset>0 0 0</rpyOffset>
+            <frameName>imu_link</frameName>
+            <initialOrientationAsReference>false</initialOrientationAsReference>
+          </plugin>
+          <pose>0 0 0 0 0 0</pose>
+        </sensor>
+    </gazebo>
+</robot>
+
+
